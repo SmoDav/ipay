@@ -13,6 +13,46 @@ use GuzzleHttp\Client;
 class Cashier
 {
     /**
+     * MPesa channel.
+     */
+    const CHANNEL_MPESA = 'mpesa';
+
+    /**
+     * Airtel channel.
+     */
+    const CHANNEL_AIRTEL = 'airtel';
+
+    /**
+     * Equity Bank channel.
+     */
+    const CHANNEL_EQUITY = 'equity';
+
+    /**
+     * Mobile banking channel.
+     */
+    const CHANNEL_MOBILE_BANKING = 'mobilebanking';
+
+    /**
+     * Debit card channel.
+     */
+    const CHANNEL_DEBIT_CARD = 'debitcard';
+
+    /**
+     * Credit card channel.
+     */
+    const CHANNEL_CREDIT_CARD = 'creditcard';
+
+    /**
+     * Mkopo rahisi channel.
+     */
+    const CHANNEL_MKOPO_RAHISI = 'mkoporahisi';
+
+    /**
+     * Saida channel.
+     */
+    const CHANNEL_SAIDA = 'saida';
+
+    /**
      * This is for http/https callback.
      */
     const CALLBACK_MODE_HTTP = 0;
@@ -50,6 +90,35 @@ class Cashier
         'amount' => 0,
         'orderId' => null,
         'invoiceNumber' => null,
+    ];
+
+    /**
+     * All available transaction channels.
+     *
+     * @var array
+     */
+    private $allChannels = [
+        self::CHANNEL_MPESA,
+        self::CHANNEL_AIRTEL,
+        self::CHANNEL_EQUITY,
+        self::CHANNEL_MOBILE_BANKING,
+        self::CHANNEL_DEBIT_CARD,
+        self::CHANNEL_CREDIT_CARD,
+        self::CHANNEL_MKOPO_RAHISI,
+        self::CHANNEL_SAIDA,
+    ];
+
+    /**
+     * Default active channels.
+     *
+     * @var array
+     */
+    private $activeChannels = [
+        self::CHANNEL_MPESA,
+        self::CHANNEL_AIRTEL,
+        self::CHANNEL_EQUITY,
+        self::CHANNEL_CREDIT_CARD,
+        self::CHANNEL_DEBIT_CARD,
     ];
 
     /**
@@ -196,6 +265,17 @@ class Cashier
     }
 
     /**
+     * @param $channels
+     * @return $this
+     */
+    public function usingChannels($channels)
+    {
+        $this->activeChannels = $channels;
+
+        return $this;
+    }
+
+    /**
      * Set up the additional parameters to go with the request.
      *
      * @param $first
@@ -278,6 +358,16 @@ class Cashier
             "crl" => $this->callbackMode,
             "hsh" => $this->generateInitialHash(),
         ];
+
+
+        foreach ($this->allChannels as $channel) {
+            if (in_array($channel, $this->activeChannels)) {
+                $params[$channel] = 1;
+                continue;
+            }
+
+            $params[$channel] = 0;
+        }
 
         try {
             $response = $this->client->request('POST', $this->initiateEndpoint, [
